@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#/usr/bin/env python
 #
 #  pgex1: freely taken after PGDEMO1.F
 #

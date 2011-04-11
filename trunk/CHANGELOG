@@ -1,8 +1,14 @@
+version 1.4
+  - Now ppgplot uses the "numpy" module by default, reverting to "numarray"
+    and then "Numeric", respectively, if the preferred module is not found.
+    See INSTALL for instructions on how to disable this.
+    New home on Google Code at: http://code.google.com/p/ppgplot/
+
 version 1.3
   - Now ppgplot can also use the "numarray" package, taking advantage of 
     the legacy (compatibility) C-API. The setup script will use 
     "numarray" by default, if it is found, otherwise it will revert 
-    to using "Numeric". See INSTALL for instructions on how to diable 
+    to using "Numeric". See INSTALL for instructions on how to disable 
     this.
   - A new set of example files were created, that import "numarray" 
     instead of "Numeric". The new files are named "na_ex_*.py"
