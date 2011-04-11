@@ -1,6 +1,6 @@
 #/usr/bin/env python
 
-from Numeric import *
+from numpy import *
 from ppgplot import *
 
 def fixenv (xrange=[0,1], yrange=[0,1], fname="none", ci = 2):
