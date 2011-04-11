@@ -1,0 +1,10 @@
+Metadata-Version: 1.0
+Name: ppgplot
+Version: 1.4
+Summary: Python / Numeric-Python bindings for PGPLOT
+Home-page: http://code.google.com/p/ppgplot/
+Author: Nick Patavalis
+Author-email: npat@efault.net
+License: LGPL (http://www.gnu.org/licenses/lgpl.html)
+Description: UNKNOWN
+Platform: UNKNOWN

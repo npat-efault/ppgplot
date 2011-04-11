@@ -1,0 +1,37 @@
+
+If you have the "numpy", "numarray" or "Numeric" python packages, and
+PGPLOT installed, and the PGPLOT_DIR environmental variable is
+pointing to the directory where PGPLOT is installed, it should be
+possible to install ppgplot with one command (issued as user "root"):
+
+ # python setup.py install
+
+If the pgplot libraries are in some other directory, or you don't feel
+like setting the PGPLOT_DIR, try this (again as user "root"):
+
+ # python setup.py build_ext -L/usr/local/pgplot
+ # python setup.py install
+
+Assuming "/usr/local/pgplot" is the directory where PGPLOT is
+installed.
+
+Depending on how you compiled PGPLOT, you may need to link ppgplot
+with additional runtime libraries. If compilation (linking) of the
+extension fails due to unresolved symbols, then this is probably the
+case. A common culprit for this is the PNG library, which is needed if
+you compiled PGPLOT with PNG driver support. It this case comment-in
+the line:
+#    libraries.append("png")
+
+in "setup.py", and try again.
+
+If you are compiling with an older fortran compiler (e.g. not gfortran),
+then you may need to comment-in the following line in setup.py:
+#    libraries.append("g2c")
+
+Since 1.4 ppgplot is configured to prefer "numpy" over "numarray" over
+"Numeric".  If for some reason you want to use "numarray" or
+"Numeric", then uncomment the appropriate "raise ImportError" lines in
+setup.py
+
+Have fun ! :)

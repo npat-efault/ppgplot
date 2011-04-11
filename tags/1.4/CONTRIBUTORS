@@ -1,0 +1,25 @@
+
+PPGPLOT CONTRIBUTORS:
+
+Steven Bamford adapted ppgplot in 2007 to use numpy, in favour of the
+depreciated numarray and Numeric modules, and included these minor
+changes (mostly to setup.py) in the Google Code version (1.4) in April
+2011.
+
+Nick Patavalis originally wrote ppgplot back in 1998, and after
+"rediscovering" it in 2003, thanks to M.A. Breddels, gave it an update
+(to 1.3) and hosted the most recent version.  The source was
+eventually put on Google Code, in February 2011, to ensure long-term
+availability.
+
+Many thanks to M.A. Breddels (http://www.astro.rug.nl/~breddels/),
+who hosted and developed the ppgplot source code in the early 2000s.
+If it wasn't for him, ppgplot would have been lost long ago! 
+Apart from this, he is also responsible for:
+
+    - The original version of the "setup.py" script
+
+    - Adding support for the pgplot functions: pginf, pgpoly, pgvp, 
+      pgqvsz, pgsclp, pgqclp, pgqtxt, pgconf.
+
+-------
