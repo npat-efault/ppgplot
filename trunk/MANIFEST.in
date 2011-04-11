@@ -1,7 +1,0 @@
-include INSTALL README CHANGELOG CONTRIBUTORS MANIFEST.in
-include Makefile
-include setup.py
-recursive-include src *.c *.h *.py
-recursive-include examples *.py
-recursive-include doc *.txt
-
