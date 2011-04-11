@@ -19,7 +19,12 @@
 #include <assert.h>
 
 #include <cpgplot.h>
+
+#ifndef USE_NUMPY 
 #include <arrayobject.h>
+#else
+#include <numpy/arrayobject.h>
+#endif
 
 /************************************************************************/
 
@@ -95,7 +100,9 @@ tofloatvector (PyObject *o, float **v, int *vsz)
 #ifndef USE_NUMARRAY 
     case PyArray_UBYTE: 
 #endif
+#ifndef USE_NUMPY 
     case PyArray_SBYTE:
+#endif
     case PyArray_SHORT:
     case PyArray_INT:
 #ifndef USE_NUMARRAY
@@ -162,7 +169,9 @@ tofloatmat(PyObject *o, float **m, int *nr, int *nc)
 #ifndef USE_NUMARRAY
     case PyArray_UBYTE: 
 #endif
+#ifndef USE_NUMPY 
     case PyArray_SBYTE:
+#endif
     case PyArray_SHORT: 
     case PyArray_INT: 
 #ifndef USE_NUMARRAY
