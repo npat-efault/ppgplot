@@ -1,4 +1,5 @@
-#!/usr/local/bin/python 
+#/usr/bin/env python
+
 from numarray import *
 from ppgplot import *
 

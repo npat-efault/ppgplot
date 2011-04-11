@@ -1,6 +1,6 @@
 #/usr/bin/env python
 
-from numarray import *
+from numpy import *
 from ppgplot import *
 
 s602 = sin(pi/3) / 2
