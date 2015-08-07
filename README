@@ -1,2 +1,12 @@
-see INSTALL for installation instruction and examples for an usage examples
+ppgplot is a python module (extension) providing bindings to the PGPLOT graphics library. 
+PGPLOT is a scientific visualization (graphics) library written in Fortran by T. J. Pearson. 
+C bindings for PGPLOT are also available. 
+ppgplot makes the library usable by Python programs. It uses the numeric / numarray modules 
+(nowadays replaced by Numpy), to efficiently represent and manipulate vectors and matrices.
+
+You can download the latest ppgplot release from
+
+  https://github.com/npat-efault/ppgplot/releases
+
+see file "INSTALL" for installation instructions and directory "examples" for usage examples
 
