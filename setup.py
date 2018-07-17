@@ -1,6 +1,6 @@
 from   __future__          import print_function
 from   distutils.sysconfig import get_python_inc, get_python_lib 
-import os, re, sys, functools
+import os, re, sys, platform, functools
 
 # distutils does not like unrecognized options but we'd like the user to be 
 # able to indicate which numarray/numpy/Numeric *not* to try.
@@ -99,7 +99,7 @@ if os.name == "posix":
     # comment out g2c if compiling with gfortran (typical nowadays)
     # you may still need this if using an earlier fortran compiler
     # libraries.append("g2c")
-    for ld in filter(os.path.isdir, ["/usr/lib/x86_64-linux-gnu/", "/usr/X11R6/lib/"]):
+    for ld in filter(os.path.isdir, ["/usr/lib/x86_64-linux-gnu/", "/usr/X11R6/lib/", "/opt/X11/lib"]):
         library_dirs.append(ld)
 
     # attempt to find libcpgplot under $PGPLOT_DIR - such that $PGPLOT_DIR can
@@ -122,14 +122,15 @@ if os.name == "posix":
     # dynamic library path into the shared library(ies). This means the user
     # will not have to set their LD_LIBRRARY_PATH and loading of the
     # _ppgplot.so module will 'just work' (famous last words)
-    pgplotlibs = None
+    soext      = 'dylib' if platform.system() == 'Darwin' else 'so'
     pgplotdir  = os.environ["PGPLOT_DIR"] if "PGPLOT_DIR" in os.environ else None
+    pgplotlibd = None
     if pgplotdir is not None:
         if not os.path.isdir(pgplotdir):
             raise RuntimeError("$PGPLOT_DIR [{0}] is not a directory".format(pgplotdir))
         for (path, _, files) in os.walk( pgplotdir ):
-            if 'libcpgplot.so' in files:
-                pgplotlibs = path
+            if 'libcpgplot.'+soext in files:
+                pgplotlibd = path
                 break
     # locate Aquaterm dynamic library if running Mac OS X SCISOFT
     # (www.stecf.org/macosxscisoft/)
@@ -140,11 +141,15 @@ if os.name == "posix":
         print("PGPLOT_DIR env var not defined, hoping libcpgplot is in system path(s)", file=sys.stderr)
 
     # if we found pgplotlibs, make sure the extension is linked against /them/
-    if pgplotlibs is not None:
+    if pgplotlibd is not None:
         # add the libraries by path and tell compiler/linker to include rpath
-        extra_link_args.append( "-Wl,-rpath={0}".format(pgplotlibs) )
-        extra_link_args += map(functools.partial(os.path.join, pgplotlibs), ["libcpgplot.so", "libpgplot.so"])
-        runtime_library_dirs.append( pgplotlibs )
+        # Only on linux we need to do the rpath song & dance at /this/ stage; on MacOSX 
+        # this can be fixed at the libgiza level (install_name option whilst linking libcpgplot)
+        # http://log.zyxar.com/blog/2012/03/10/install-name-on-os-x/
+        if platform.system() != 'Darwin':
+            extra_link_args.append( "-Wl,-rpath={0}".format(pgplotlibd) )
+        extra_link_args.extend( map(functools.partial(os.path.join, pgplotlibd), map("{{0}}.{0}".format(soext).format, ["libcpgplot", "libpgplot"])) )
+        runtime_library_dirs.append( pgplotlibd )
         # pgplotlibs can not be None if pgplotdir is not a directory so the following can be
         # executed unconditionally
         include_dirs       += [os.path.join(pgplotdir, "include")]
