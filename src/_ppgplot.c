@@ -1386,6 +1386,19 @@ fail:
     return(NULL);
 }
 
+PYF(pgpt1)
+{
+  float x, y;
+  int symbol=0;
+
+    if (!PyArg_ParseTuple(args,"ffi:pgrect",&x, &y, &symbol)) 
+		return(NULL);
+    
+    cpgpt1(x,y,symbol);
+
+    PYRN;
+}
+
 PYF(pgpt)
 {
     int xsz, ysz;
@@ -2269,6 +2282,7 @@ static PyMethodDef PpgMethods[] = {
     {"pgpanl", pgpanl, 1},
     {"pgpap", pgpap, 1},
     {"pgpt", pgpt, 1},
+    {"pgpt1", pgpt1, 1},
     {"pgptxt", pgptxt, 1},
     {"pgqah", pgqah, 1},
     {"pgqcf", pgqcf, 1},
