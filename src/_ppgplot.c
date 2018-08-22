@@ -1391,7 +1391,7 @@ PYF(pgpt1)
   float x, y;
   int symbol=0;
 
-    if (!PyArg_ParseTuple(args,"ffi:pgrect",&x, &y, &symbol)) 
+    if (!PyArg_ParseTuple(args,"ffi:pgpt1",&x, &y, &symbol)) 
 		return(NULL);
     
     cpgpt1(x,y,symbol);
