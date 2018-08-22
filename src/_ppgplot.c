@@ -1740,8 +1740,18 @@ fail:
     return(NULL);
 }
 
+PYF(pgerr1)
+{
+  float x, y, e, t;
+  int dir = 5;
 
-
+  if (!PyArg_ParseTuple(args,"iffff:pgerr1",&dir, &x, &y, &e, &t)) 
+    return(NULL);
+  
+  cpgerr1(dir,x,y,e,t);
+  
+  PYRN;
+}
 
 PYF(pghist)
 {
@@ -2261,6 +2271,7 @@ static PyMethodDef PpgMethods[] = {
     {"pgerrb", pgerrb, 1},
     {"pgerrx", pgerrx, 1},
     {"pgerry", pgerry, 1},
+    {"pgerr1", pgerr1, 1},
     {"pgetxt", pgetxt, 1},
     {"pggray", pggray, 1},
     {"pggray_s", pggray_s, 1},
