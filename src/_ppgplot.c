@@ -1386,17 +1386,17 @@ fail:
     return(NULL);
 }
 
-PYF(pgerr1)
+PYF(pgpt1)
 {
-  float x, y, e, t;
-  int dir = 5;
+  float x, y;
+  int symbol=0;
 
-  if (!PyArg_ParseTuple(args,"iffff:pgerr1",&dir, &x, &y, &e, &t)) 
-    return(NULL);
-  
-  cpgerr1(dir,x,y,e,t);
-  
-  PYRN;
+    if (!PyArg_ParseTuple(args,"ffi:pgpt1",&x, &y, &symbol)) 
+		return(NULL);
+    
+    cpgpt1(x,y,symbol);
+
+    PYRN;
 }
 
 PYF(pgpt)
@@ -1740,8 +1740,18 @@ fail:
     return(NULL);
 }
 
+PYF(pgerr1)
+{
+  float x, y, e, t;
+  int dir = 5;
 
-
+  if (!PyArg_ParseTuple(args,"iffff:pgerr1",&dir, &x, &y, &e, &t)) 
+    return(NULL);
+  
+  cpgerr1(dir,x,y,e,t);
+  
+  PYRN;
+}
 
 PYF(pghist)
 {
@@ -2261,6 +2271,7 @@ static PyMethodDef PpgMethods[] = {
     {"pgerrb", pgerrb, 1},
     {"pgerrx", pgerrx, 1},
     {"pgerry", pgerry, 1},
+    {"pgerr1", pgerr1, 1},
     {"pgetxt", pgetxt, 1},
     {"pggray", pggray, 1},
     {"pggray_s", pggray_s, 1},
@@ -2282,7 +2293,7 @@ static PyMethodDef PpgMethods[] = {
     {"pgpanl", pgpanl, 1},
     {"pgpap", pgpap, 1},
     {"pgpt", pgpt, 1},
-    {"pgerr1", pgerr1, 1},
+    {"pgpt1", pgpt1, 1},
     {"pgptxt", pgptxt, 1},
     {"pgqah", pgqah, 1},
     {"pgqcf", pgqcf, 1},
