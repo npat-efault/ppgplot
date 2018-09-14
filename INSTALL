@@ -6,6 +6,9 @@ possible to install ppgplot with one command (issued as user "root"):
 
  # python setup.py install
 
+New in 2018:
+    Now also support python3
+
 If the pgplot libraries are in some other directory, or you don't feel
 like setting the PGPLOT_DIR, try this (again as user "root"):
 
@@ -14,6 +17,20 @@ like setting the PGPLOT_DIR, try this (again as user "root"):
 
 Assuming "/usr/local/pgplot" is the directory where PGPLOT is
 installed.
+
+New in 2018:
+    The "-L/.../" trick does not work if > 1 'libcpgplot.{so|dylib}' are
+    installed on the system.
+
+    If linkage to an alternative, co-existing, PGPLOT library is required
+    (e.g. 'giza' - http://giza.sourceforge.net/):
+        export PGPLOT_DIR=/path/to/giza-root
+
+    The linker will be instructed to choose the library(ies) from
+    /path/to/giza-root/lib/ over those found in the system paths 
+    in such a way the user will not have to tinker with their
+    LD_LIBRARY_PATH variable to make ld.so find and load 
+    he correct shared libraries.
 
 Depending on how you compiled PGPLOT, you may need to link ppgplot
 with additional runtime libraries. If compilation (linking) of the
@@ -33,5 +50,10 @@ Since 1.4 ppgplot is configured to prefer "numpy" over "numarray" over
 "Numeric".  If for some reason you want to use "numarray" or
 "Numeric", then uncomment the appropriate "raise ImportError" lines in
 setup.py
+
+New in 2018:
+    In stead of having to edit the setup.py script it is now possible to
+    pass '--no-Numeric', '--no-numpy' and/or '--no-numarray' on the
+    commandline to prevent checking for a specific num* implementation
 
 Have fun ! :)

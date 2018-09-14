@@ -66,6 +66,8 @@ static PyObject *PpgIOErr;
 static PyObject *PpgTYPEErr;
 static PyObject *PpgMEMErr;
 
+float xcurs=0.0, ycurs=0.0;
+
 /**************************************************************************/
 /*                          support functions                             */
 /**************************************************************************/
@@ -74,6 +76,8 @@ static PyObject *
 tofloatvector (PyObject *o, float **v, int *vsz)
 {
     PyArrayObject *a1, *af1, *af2;
+    PyArray_Descr *descr;
+    npy_intp dims;
     int ownedaf1=0;
 
     /* Check if args are arrays. */
@@ -100,7 +104,7 @@ tofloatvector (PyObject *o, float **v, int *vsz)
 #ifndef USE_NUMARRAY 
     case PyArray_UBYTE: 
 #endif
-#ifndef USE_NUMPY 
+#ifdef PyArray_SBYTE
     case PyArray_SBYTE:
 #endif
     case PyArray_SHORT:
@@ -126,11 +130,13 @@ tofloatvector (PyObject *o, float **v, int *vsz)
 #endif
     
     af2 = af1;
-    if (PyArray_As1D((PyObject **)&af2, (char **)v, vsz,
-					 PyArray_FLOAT) == -1) {
+    descr = PyArray_DescrFromType(PyArray_FLOAT); 
+    if (PyArray_AsCArray((PyObject **)&af2, (void *)v, &dims, 1,
+                         descr) == -1) {
 		af2 = NULL;
     }
-    
+    *vsz = dims;
+
     if (ownedaf1) { Py_DECREF(af1); }
 
     return((PyObject *)af2);
@@ -142,6 +148,8 @@ static PyObject *
 tofloatmat(PyObject *o, float **m, int *nr, int *nc)
 {
     PyArrayObject *a1, *af1, *af2;
+    PyArray_Descr *descr;
+    npy_intp dims[2];
     int ownedaf1=0;
     char **tmpdat;
     
@@ -169,7 +177,7 @@ tofloatmat(PyObject *o, float **m, int *nr, int *nc)
 #ifndef USE_NUMARRAY
     case PyArray_UBYTE: 
 #endif
-#ifndef USE_NUMPY 
+#ifdef PyArray_SBYTE
     case PyArray_SBYTE:
 #endif
     case PyArray_SHORT: 
@@ -195,11 +203,14 @@ tofloatmat(PyObject *o, float **m, int *nr, int *nc)
 #endif
     
     af2 = af1;
-    if (PyArray_As2D((PyObject **)&af2, (char ***)&tmpdat, nr, nc, 
-					 PyArray_FLOAT) == -1) {
+    descr = PyArray_DescrFromType(PyArray_FLOAT); 
+    if (PyArray_AsCArray((PyObject **)&af2, (void *)&tmpdat, dims, 2,
+                         descr) == -1) {
 		af2 = NULL;
 		goto bailout;
     }
+    *nr = dims[0];
+    *nc = dims[1];
     
     /* WARNING: What follows is a little tricky and I dunno if I'm 
        really allowed to do this. On the other hand it really conserves 
@@ -391,6 +402,19 @@ PYF(pgqvp)
 	if(!PyArg_ParseTuple(args, "i", &units))
 		return NULL;
 	cpgqvp(units, &x1, &x2, &y1, &y2);
+
+	return Py_BuildValue("ffff", x1, x2, y1, y2);
+}
+
+/*
+  pgqwin()
+  return x1, x2, y1, y2
+*/
+PYF(pgqwin)
+{
+	float x1, x2, y1, y2;
+
+	cpgqwin(&x1, &x2, &y1, &y2);
 
 	return Py_BuildValue("ffff", x1, x2, y1, y2);
 }
@@ -1004,22 +1028,21 @@ PYF(pgunsa)
 
 PYF(pgcurs)
 {
-    float x=0.0, y=0.0;
     char ch = '\0';
 
-    if (!PyArg_ParseTuple(args,"|ff:pgcurs",&x, &y))
+    if (!PyArg_ParseTuple(args,"|ff:pgcurs",&xcurs, &ycurs))
 		return(NULL);
 
-    cpgcurs(&x,&y,&ch);
+    cpgcurs(&xcurs,&ycurs,&ch);
 
-    return(Py_BuildValue("ffc",x,y,ch));
+    return(Py_BuildValue("ffc",xcurs,ycurs,ch));
 }
 
 
 PYF(pgband)
 {
     int mode=7, i=0;
-    float xref = 0.0, yref = 0.0, x=0.0, y=0.0;
+    float xref = 0.0, yref = 0.0;
     char ch = '\0';
 
     if (!PyArg_ParseTuple(args,"i|iff:pgband",
@@ -1027,9 +1050,9 @@ PYF(pgband)
 		return(NULL);
 
 
-    cpgband(mode,i,xref,yref,&x,&y,&ch);
+    cpgband(mode,i,xref,yref,&xcurs,&ycurs,&ch);
 
-    return(Py_BuildValue("ffc",x,y,ch));
+    return(Py_BuildValue("ffc",xcurs,ycurs,ch));
 }
 
 PYF(pgqcol)
@@ -1363,6 +1386,19 @@ fail:
     return(NULL);
 }
 
+PYF(pgpt1)
+{
+  float x, y;
+  int symbol=0;
+
+    if (!PyArg_ParseTuple(args,"ffi:pgpt1",&x, &y, &symbol)) 
+		return(NULL);
+    
+    cpgpt1(x,y,symbol);
+
+    PYRN;
+}
+
 PYF(pgpt)
 {
     int xsz, ysz;
@@ -1639,6 +1675,82 @@ fail:
     if (ay) { Py_DECREF(ay); }
     if (ae) { Py_DECREF(ae); }
     return(NULL);
+}
+
+PYF(pgerrx)
+{
+    PyObject *oy=NULL, *ox1=NULL, *ox2=NULL;
+    PyArrayObject *ay=NULL, *ax1=NULL, *ax2=NULL;
+    float *y=NULL, *x1=NULL, *x2=NULL, t=1.0;
+    int szy=0, szx1=0, szx2 =0, n1;
+
+    if (!PyArg_ParseTuple(args,"OOO|f:pgerrx", &ox1, &ox2, &oy, &t))
+        return(NULL);
+
+    if (!(ay = (PyArrayObject *)tofloatvector(oy, &y, &szy))) goto fail;
+    if (!(ax1 = (PyArrayObject *)tofloatvector(ox1, &x1, &szx1))) goto fail;
+    if (!(ax2 = (PyArrayObject *)tofloatvector(ox2, &x2, &szx2))) goto fail;
+
+    /* this is n1 = min(szx, szx1, szx2) */
+    n1=(szy<szx1)?((szy<szx2)?szy:szx2):((szx1<szx2)?szx1:szx2);
+
+    cpgerrx(n1, x1, x2, y, t);
+
+    Py_DECREF(ay);
+    Py_DECREF(ax1);
+    Py_DECREF(ax2);
+    PYRN;
+
+fail:
+    if (ay) { Py_DECREF(ay); }
+    if (ax1) { Py_DECREF(ax1); }
+    if (ax2) { Py_DECREF(ax2); }
+    return(NULL);
+}
+
+
+PYF(pgerry)
+{
+    PyObject *ox=NULL, *oy1=NULL, *oy2=NULL;
+    PyArrayObject *ax=NULL, *ay1=NULL, *ay2=NULL;
+    float *x=NULL, *y1=NULL, *y2=NULL, t=1.0;
+    int szx=0, szy1=0, szy2 =0, n1;
+
+    if (!PyArg_ParseTuple(args,"OOO|f:pgerry", &ox, &oy1, &oy2, &t))
+        return(NULL);
+
+    if (!(ax = (PyArrayObject *)tofloatvector(ox, &x, &szx))) goto fail;
+    if (!(ay1 = (PyArrayObject *)tofloatvector(oy1, &y1, &szy1))) goto fail;
+    if (!(ay2 = (PyArrayObject *)tofloatvector(oy2, &y2, &szy2))) goto fail;
+
+    /* this is n1 = min(szx, szy1, szy2) */
+    n1=(szx<szy1)?((szx<szy2)?szx:szy2):((szy1<szy2)?szy1:szy2);
+
+    cpgerry(n1, x, y1, y2, t);
+
+    Py_DECREF(ax);
+    Py_DECREF(ay1);
+    Py_DECREF(ay2);
+    PYRN;
+
+fail:
+    if (ax) { Py_DECREF(ax); }
+    if (ay1) { Py_DECREF(ay1); }
+    if (ay2) { Py_DECREF(ay2); }
+    return(NULL);
+}
+
+PYF(pgerr1)
+{
+  float x, y, e, t;
+  int dir = 5;
+
+  if (!PyArg_ParseTuple(args,"iffff:pgerr1",&dir, &x, &y, &e, &t)) 
+    return(NULL);
+  
+  cpgerr1(dir,x,y,e,t);
+  
+  PYRN;
 }
 
 PYF(pghist)
@@ -2157,6 +2269,9 @@ static PyMethodDef PpgMethods[] = {
     {"pgenv", pgenv, 1},
     {"pgeras", pgeras, 1},
     {"pgerrb", pgerrb, 1},
+    {"pgerrx", pgerrx, 1},
+    {"pgerry", pgerry, 1},
+    {"pgerr1", pgerr1, 1},
     {"pgetxt", pgetxt, 1},
     {"pggray", pggray, 1},
     {"pggray_s", pggray_s, 1},
@@ -2178,6 +2293,7 @@ static PyMethodDef PpgMethods[] = {
     {"pgpanl", pgpanl, 1},
     {"pgpap", pgpap, 1},
     {"pgpt", pgpt, 1},
+    {"pgpt1", pgpt1, 1},
     {"pgptxt", pgptxt, 1},
     {"pgqah", pgqah, 1},
     {"pgqcf", pgqcf, 1},
@@ -2231,6 +2347,7 @@ static PyMethodDef PpgMethods[] = {
     {"pgqclp", pgqclp, 1},
     {"pgconf", pgconf, 1},
     {"pgqtxt", pgqtxt, 1},
+    {"pgqwin", pgqwin, 1},
 
 /* END ADDED */
 #ifdef DEBUG
@@ -2240,23 +2357,64 @@ static PyMethodDef PpgMethods[] = {
     {NULL,      NULL}        /* Sentinel */
 };
 
+#if PY_MAJOR_VERSION >= 3
+    static struct PyModuleDef ppgplotdef = {
+        PyModuleDef_HEAD_INIT,
+        "_ppgplot",     /* m_name */
+        "PPGPLOT Module",  /* m_doc */
+        -1,                  /* m_size */
+        PpgMethods,    /* m_methods */
+        NULL,                /* m_reload */
+        NULL,                /* m_traverse */
+        NULL,                /* m_clear */
+        NULL,                /* m_free */
+    };
+#endif
+
 /************************************************************************/
 
-void
-init_ppgplot (void)
+
+
+static PyObject *
+moduleinit(void)
 {
     PyObject *m, *d;
+#if PY_MAJOR_VERSION <= 2
     m = Py_InitModule("_ppgplot", PpgMethods);
+#else
+    m = PyModule_Create(&ppgplotdef);
+#endif
     d = PyModule_GetDict(m);
-    import_array();
+#if PY_MAJOR_VERSION <= 2
     PpgIOErr = PyString_FromString("_ppgplot.ioerror");
     PpgTYPEErr = PyString_FromString("_ppgplot.typeerror");
     PpgMEMErr = PyString_FromString("_ppgplot.memerror");
+#else
+    PpgIOErr = PyBytes_FromString("_ppgplot.ioerror");
+    PpgTYPEErr = PyBytes_FromString("_ppgplot.typeerror");
+    PpgMEMErr = PyBytes_FromString("_ppgplot.memerror");
+#endif
     PyDict_SetItemString(d, "ioerror", PpgIOErr);
     PyDict_SetItemString(d, "typeerror", PpgTYPEErr);
     PyDict_SetItemString(d, "memerror", PpgMEMErr);
+    return m;
 }
 
+#if PY_MAJOR_VERSION < 3
+    void
+    init_ppgplot(void)
+    {
+        import_array();
+        moduleinit();
+    }
+#else
+    PyMODINIT_FUNC
+    PyInit__ppgplot(void)
+    {
+        import_array();
+        return moduleinit();
+    }
+#endif
 /************************************************************************/
 /* End of _ppgplot.c */
 /************************************************************************/

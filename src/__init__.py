@@ -1,1 +1,1 @@
-from _ppgplot import *
+from . _ppgplot import *
