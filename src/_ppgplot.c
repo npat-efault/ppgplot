@@ -1012,7 +1012,11 @@ PYF(pgcurs)
 
     cpgcurs(&x,&y,&ch);
 
+#if PY_MAJOR_VERSION >= 3
+    return(Py_BuildValue("ffC",x,y,ch));
+#else
     return(Py_BuildValue("ffc",x,y,ch));
+#endif
 }
 
 
@@ -1029,7 +1033,11 @@ PYF(pgband)
 
     cpgband(mode,i,xref,yref,&x,&y,&ch);
 
+#if PY_MAJOR_VERSION >= 3
+    return(Py_BuildValue("ffC",x,y,ch));
+#else
     return(Py_BuildValue("ffc",x,y,ch));
+#endif
 }
 
 PYF(pgqcol)
@@ -2241,21 +2249,54 @@ static PyMethodDef PpgMethods[] = {
 };
 
 /************************************************************************/
+#if PY_MAJOR_VERSION >= 3
+  static struct PyModuleDef PpgModule = {
+    PyModuleDef_HEAD_INIT,
+      .m_name = "_ppgplot",
+      .m_doc = "ppgplot",
+      .m_size = -1,
+      .m_methods = PpgMethods,
+  };
+#endif
 
-void
-init_ppgplot (void)
+static PyObject *
+moduleinit(void)
 {
-    PyObject *m, *d;
-    m = Py_InitModule("_ppgplot", PpgMethods);
-    d = PyModule_GetDict(m);
-    import_array();
-    PpgIOErr = PyString_FromString("_ppgplot.ioerror");
-    PpgTYPEErr = PyString_FromString("_ppgplot.typeerror");
-    PpgMEMErr = PyString_FromString("_ppgplot.memerror");
-    PyDict_SetItemString(d, "ioerror", PpgIOErr);
-    PyDict_SetItemString(d, "typeerror", PpgTYPEErr);
-    PyDict_SetItemString(d, "memerror", PpgMEMErr);
+    PyObject *m;
+
+#if PY_MAJOR_VERSION >= 3
+    m = PyModule_Create(&PpgModule);
+#else
+    m = Py_InitModule3("_ppgplot", PpgMethods, NULL);
+#endif
+  import_array();
+  PyObject *d = PyModule_GetDict(m);
+  PpgIOErr = PyUnicode_FromString("_ppgplot.ioerror");
+  PpgTYPEErr = PyUnicode_FromString("_ppgplot.typeerror");
+  PpgMEMErr = PyUnicode_FromString("_ppgplot.memerror");
+  PyDict_SetItemString(d, "ioerror", PpgIOErr);
+  PyDict_SetItemString(d, "typeerror", PpgTYPEErr);
+  PyDict_SetItemString(d, "memerror", PpgMEMErr);
+
+    if (m == NULL)
+        return NULL;
+
+  return m;
 }
+
+#if PY_MAJOR_VERSION < 3
+    PyMODINIT_FUNC
+    init_ppgplot(void)
+    {
+        moduleinit();
+    }
+#else
+    PyMODINIT_FUNC
+    PyInit__ppgplot(void)
+    {
+        return moduleinit();
+    }
+#endif
 
 /************************************************************************/
 /* End of _ppgplot.c */
